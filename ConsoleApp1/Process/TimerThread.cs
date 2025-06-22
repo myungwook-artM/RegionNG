@@ -39,7 +39,8 @@ namespace RegionNG
     {
         public override void TimerExpired(int id)
         {
-            _func?.Invoke(id);
+            if (false == _func?.Invoke(id))
+                return;
 
             _execDate = DateTime.Now.AddMilliseconds( _delayMs );        
             

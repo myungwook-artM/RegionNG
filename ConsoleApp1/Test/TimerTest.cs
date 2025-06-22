@@ -9,6 +9,7 @@ namespace RegionNG
 {
     static class TimerTest
     {
+        static int count = 0;
         public static void Test()
         {
             Console.WriteLine($"TimerTest---------------------------------------");
@@ -30,17 +31,17 @@ namespace RegionNG
                 return true;
             });
 
+
             // 1초마다 반복하는 타이머 추가
             ProcessTimer.AddPeriodicTimer(1000, (int id) =>
             {
                 Console.WriteLine($"1000ms PeriodicTimer");
-                return true;
-            });
 
-            // 5초 이후 ProcessTimer 종료 되도록 함
-            ProcessTimer.AddOneTimeTimer(5000, (int id) =>
-            {
-                ProcessTimer.StopThread();
+                // 5초후 중단
+                if( count++ > 5)
+                {
+                    return false; // 루프 중단
+                }
                 return true;
             });
 

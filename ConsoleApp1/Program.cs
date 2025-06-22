@@ -1,5 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using RegionNG;
+using RegionNG.World;
 
 //Console.ReadLine();
 // 메모리 풀 테스트
@@ -27,6 +28,8 @@ Console.ReadLine();
 GlobalPipelineTest.Test();
 Console.ReadLine();
 
+// 월드 업데이트 테스트
+WorldMap.Test();
 
 /*****************************************************************
  * 호연 게임에서는 lockless 프로그래밍을 위해서 
