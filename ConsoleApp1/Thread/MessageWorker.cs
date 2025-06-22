@@ -11,9 +11,9 @@ namespace RegionNG
     {
         public Action<int> _action;
 
-        public void Exec()
+        public void Exec(int Id)
         {
-            _action?.Invoke(0);
+            _action?.Invoke(Id);
         }
     }
 
@@ -23,7 +23,7 @@ namespace RegionNG
 
         private static void MessageProc(ActionMsg actionMsg)
         {
-            actionMsg.Exec();
+            actionMsg.Exec(0);
         }
 
         public void EnqueueLamda(Action<int> action)
@@ -66,31 +66,29 @@ namespace RegionNG
 
     public class MessageWorkerPack
     {
-        Dictionary<int /*threadId*/ , MessageWorker> _messageWorkerDic = new();
-        List<int> _threadIdList = new List<int>();
-        object _lock = new object();
-        
+        Dictionary<int /*workerId*/ , MessageWorkerAsync> _messageWorkerDic = new();
+        List<MessageWorkerAsync> _messageWorkerList = new();
+
         public MessageWorkerPack( int ThreadCount) 
         {
             for (int i = 0; i < ThreadCount; i++)
             {
-                var msgWorker = new MessageWorker();
-                msgWorker.EnqueueLamda((Id) =>
-                {
-                    lock (_lock)
-                    {
-                        _messageWorkerDic.Add(Thread.CurrentThread.ManagedThreadId, msgWorker);
-                        _threadIdList.Add(Thread.CurrentThread.ManagedThreadId);
-                    }
-                });
+                var msgWorker = new MessageWorkerAsync();
+                _messageWorkerDic.Add(msgWorker.GetId(), msgWorker);
+                _messageWorkerList.Add(msgWorker);
             }
         }
 
-        public MessageWorker GetWorker(int key)
+        public MessageWorkerAsync GetWorkerByKey(int key)
         {
-            int threadId = _threadIdList[key % _threadIdList.Count];
+            int index = key % _messageWorkerList.Count;
 
-            return _messageWorkerDic[threadId];
+            return _messageWorkerList[index];
+        }
+
+        public MessageWorkerAsync GetWorkerByWorker(int key)
+        {
+            return _messageWorkerDic[key];
         }
 
     }

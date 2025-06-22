@@ -6,41 +6,51 @@ using RegionNG;
 
 public class ProcessQueueAsync<T>
 {
-    private Queue<T> _queue;
     private readonly Func<T, ValueTask> _actionAsync;
-    private readonly TaskScheduler _scheduler;
-    private Channel<T> _channel;
+    private ConcurrentExclusiveSchedulerPair _scheduler;
+    private Channel<T> _channel = Channel.CreateUnbounded<T>(new UnboundedChannelOptions{
+        SingleReader = true,
+        SingleWriter = false,
+    });
+
     private CancellationTokenSource _cts;
 
     public int Count => _channel.Reader.Count;
 
-    public ProcessQueueAsync(Func<T, ValueTask> lamdaFunc, TaskScheduler scheduler = null)
+    public ProcessQueueAsync(Func<T, ValueTask> lamdaFunc, int threadCount = 1)
     {
-        _channel = Channel.CreateUnbounded<T>();
-        //_scheduler = scheduler ?? TaskScheduler.Default;
-        _scheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, 4).ExclusiveScheduler;
-
         _actionAsync = lamdaFunc;
+        _scheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, threadCount);
 
+
+        // 쓰레드가 1개라면 배타적 스케줄
+        // 쓰레드가 1개 이상이면 동시 스케줄
         Task.Factory.StartNew(
             () => ProcessLoopAsync(CancellationToken.None),
             CancellationToken.None,
             TaskCreationOptions.None,
-            _scheduler
+            (threadCount == 1 ? _scheduler.ExclusiveScheduler : _scheduler.ConcurrentScheduler)
         );
-        //    .Unwrap().ContinueWith(t =>
-        //{
-        //    if (t.IsFaulted)
-        //    {
-        //        // 예외 처리 또는 로깅
-        //        Console.WriteLine(t.Exception);
-        //    }
-        //}, TaskScheduler.Default);
+
     }
 
+    /// <summary>
+    /// 비동기적으로 아이템을 큐에 추가합니다.
+    /// </summary>
+    /// <param name="item"></param>
+    /// <returns></returns>
     public async ValueTask EnqueueAsync(T item)
     {
         await _channel.Writer.WriteAsync(item);
+    }
+
+    /// <summary>
+    /// 동기적으로 아이템을 큐에 추가합니다.
+    /// </summary>
+    /// <param name="item"></param>
+    public void Enqueue(T item)
+    {
+        _channel.Writer.TryWrite(item);
     }
 
     private async ValueTask ProcessLoopAsync(CancellationToken token)

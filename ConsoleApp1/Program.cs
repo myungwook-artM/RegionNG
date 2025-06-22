@@ -1,8 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using RegionNG;
 
-
-
 //Console.ReadLine();
 // 메모리 풀 테스트
 //MemoryPoolTest.Test();
@@ -13,7 +11,9 @@ using RegionNG;
 ProcessQueueTest.Test();
 Console.ReadLine();
 
-ProcessQueueTest.TestAsync();
+// 비동기 큐 테스트
+ProcessQueueTest.TestAsync(1);
+ProcessQueueTest.TestAsync(2);
 Console.ReadLine();
 
 // 타이머 테스트
@@ -30,7 +30,7 @@ Console.ReadLine();
 
 /*****************************************************************
  * 호연 게임에서는 lockless 프로그래밍을 위해서 
- * 하나의 존에 있는 유저와 몬스터는 지정된 하나의 쓰레드 큐(ProcessQueue) 에서만 로직을 처리한다. 
+ * 하나의 존에 있는 유저와 몬스터는 지정된 하나의 쓰레드 큐(ProcessQueueAsync) 에서만 로직을 처리한다. 
  * 그러므로 유저의 요청 패킷, 몬스터, 존 업데이트는 하나의 큐에서 순서대로 처리되므로 
  * 다른 쓰레드에서 메모리 접근이 안되며 Lock 없이 프로그래밍이 가능하다.
  *  
@@ -44,9 +44,6 @@ Console.ReadLine();
  *  * 
  ******************************************************************/
 
-
-// 스테이지 구조를 위한 쓰레드 
-// StageThreadManager.InitStageThreadManager();
 
 
 

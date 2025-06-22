@@ -52,7 +52,7 @@ namespace RegionNG
     {
         private static DateTime _topDate = DateTime.Now.AddDays(365);
         private static PriorityQueue<IOTimerBase, DateTime> _priorityQueue = new( 1024);
-        private static ProcessQueue<IOTimerBase> _processQueue = new (ProcessQueueThread, 1, 1024, "TimerThread");
+        private static ProcessQueueAsync<IOTimerBase> _processQueue = new (ProcessQueueThread, 4);
         private static ConcurrentBag<IOTimerBase> _bufferQueue = new ();
         private static bool _isPrcess= true;
 
@@ -62,9 +62,10 @@ namespace RegionNG
 
             ManagedThread.CreateThread(TimerCheckerThreadProc, "TimerCheckerThread");
         }
-        public static void ProcessQueueThread(IOTimerBase timerObject)
+        public static ValueTask ProcessQueueThread(IOTimerBase timerObject)
         {
             timerObject.TimerExpired(0);
+            return ValueTask.CompletedTask;
         }
 
         public static void StopThread()
@@ -107,7 +108,6 @@ namespace RegionNG
                         {
                             _topDate = top._execDate;
                             break;
-
                         }
                     }
                 }

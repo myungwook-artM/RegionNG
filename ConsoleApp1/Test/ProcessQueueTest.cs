@@ -10,6 +10,7 @@ namespace RegionNG
     {
         public class TestItem
         {
+            public int _worker = 0;
             public int _idx = 0;
         }
 
@@ -22,7 +23,7 @@ namespace RegionNG
         {
             Console.WriteLine($"ProcessQueueTest---------------------------------------");
 
-            ProcessQueue<TestItem> _processQueue = new ProcessQueue<TestItem>(ExecFunc, 4, 1024, "TestQueue");
+            ProcessQueue<TestItem> _processQueue = new ProcessQueue<TestItem>(ExecFunc, 1, 1024, "TestQueue");
 
             for (int i = 0; i < 10; i++)
             {
@@ -30,16 +31,18 @@ namespace RegionNG
             }
         }
 
-
-
         public static async ValueTask ExecFuncAsync(TestItem item)
         {
-            Console.WriteLine($"idx:{item._idx} async ThreadId:{Thread.CurrentThread.ManagedThreadId}");
+            Console.WriteLine($"_worker:{item._worker} idx:{item._idx} async ThreadId:{Thread.CurrentThread.ManagedThreadId}");
 
-            await Task.Delay(10);
+            // 하나의 쓰레드에서 처리가 되는지 확인하기 위함
+            if (item._idx % 2 == 0)
+            {
+                await Task.Delay(100);
+            }
         }
 
-        public static void TestAsync()
+        public static void TestAsync(int worker = 0)
         {
             Console.WriteLine($"ProcessQueueAsyncTest---------------------------------------");
 
@@ -47,10 +50,15 @@ namespace RegionNG
 
             for (int i = 0; i < 10; i++)
             {
-                _processQueue.EnqueueAsync(new TestItem { _idx = i });
+                _processQueue.Enqueue(new TestItem
+                {
+                    _worker = worker,
+                    _idx = i
+                });
             }
-        }
+        } 
 
+        
 
     }
 

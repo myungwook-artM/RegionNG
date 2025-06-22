@@ -16,7 +16,7 @@ namespace RegionNG
             public int _idx = 0;
         }
 
-        public static void ExecFunc(MemoryPoolItem item)
+        public static async ValueTask ExecFunc(MemoryPoolItem item)
         {
             var singleObj = SingleMemoryPool<MemoryPoolItem>.Pop();
             SingleMemoryPool<MemoryPoolItem>.Push(singleObj);
@@ -24,14 +24,16 @@ namespace RegionNG
             var threadObj = ThreadMemoryPool<MemoryPoolItem>.Pop();
             ThreadMemoryPool<MemoryPoolItem>.Push(threadObj);
 
-            Console.WriteLine($"idx:{item._idx} ThreadId:{Thread.CurrentThread.ManagedThreadId}");              
+            Console.WriteLine($"idx:{item._idx} ThreadId:{Thread.CurrentThread.ManagedThreadId}");     
+            
+            //await Task.Yield();
         }
 
         
 
         public static void Test()
         {
-            ProcessQueue<MemoryPoolItem> _processQueue = new ProcessQueue<MemoryPoolItem>(ExecFunc, 4, 1024, "TestQueue");
+            ProcessQueueAsync<MemoryPoolItem> _processQueue = new ProcessQueueAsync<MemoryPoolItem>(ExecFunc, 4);
 
             for (int i = 0; i < 1000; i++)
             {

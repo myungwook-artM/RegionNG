@@ -16,12 +16,12 @@ namespace RegionNG
     public class PipelineJob
     {
         public int _key;
-        public Func<int, bool> _action;
+        public Func<int, ValueTask<bool>> _action;
         public GlobalPipelineType _type;
 
-        public bool Exec()
+        public async ValueTask<bool> ExecAsync(int Id)
         {
-            return _action.Invoke(0);
+            return await _action.Invoke(Id);
         }
     }
 
@@ -30,12 +30,12 @@ namespace RegionNG
         private Queue<PipelineJob> _queue = new();
         private PipelineJob _failjob = new();
 
-        public void PushJob(int key, GlobalPipelineType type, Func<int, bool> action)
+        public void PushJob(int key, GlobalPipelineType type, Func<int, ValueTask<bool>> action)
         {
             _queue.Enqueue(new PipelineJob { _key = key, _type = type, _action = action });
         }
 
-        public void FailJob(int key, Func<int, bool> action)
+        public void FailJob(int key, Func<int, ValueTask<bool>> action)
         {
             _failjob = new PipelineJob {  _key = key, _type = GlobalPipelineType.LOGIC_THREAD, _action = action };
         }
@@ -65,39 +65,40 @@ namespace RegionNG
 
         private void ExecJobForLogicThread(PipelineJob job)
         {
-            var worker = LogicThread.Instance.GetWorker(job._key);
-
-            worker.EnqueueLamda( ( int Id) =>
+            var worker = LogicThread.Instance.GetWorkerByKey(job._key);
+            
+            worker.EnqueueLamda(async ( int Id) =>
             {
-                InternalExecJob(job);
+                await InternalExecJob(Id, job );
             });
         }
 
         private void ExecJobForDBThread(PipelineJob job)
         {
-            var worker = DBThread.Instance.GetWorker(job._key);
+            var worker = DBThread.Instance.GetWorkerByKey(job._key);
 
-            worker.EnqueueLamda((int Id) =>
+            worker.EnqueueLamda(async (int Id) =>
             {
-                InternalExecJob(job);
+                await InternalExecJob(Id, job );
             });
         }
 
         private void ExecJobForTimer(PipelineJob job)
         {
-            ProcessTimer.AddOneTimeTimer(0, (int Id) =>
-            {
-                InternalExecJob(job);
-                return true;
-            });
-
+            //ProcessTimer.AddOneTimeTimer(0, async  (int Id) =>
+            //{
+            //    await InternalExecJob(Id, job);
+            //    return true;
+            //});
         }
 
-        private  bool InternalExecJob(PipelineJob job)
+        private async ValueTask<bool> InternalExecJob(int Id, PipelineJob job )
         {
-            if (false == job.Exec())
+            if (false == await job.ExecAsync(Id))
             {
-                _failjob?.Exec();
+                if (_failjob != null)
+                    await _failjob.ExecAsync(Id);
+
                 return false;            
             }
             
