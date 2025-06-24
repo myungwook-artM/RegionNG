@@ -1,6 +1,5 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using RegionNG;
-using RegionNG.World;
 
 //Console.ReadLine();
 // 메모리 풀 테스트
