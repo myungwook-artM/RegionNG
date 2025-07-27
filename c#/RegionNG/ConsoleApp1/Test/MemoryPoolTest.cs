@@ -26,7 +26,6 @@ namespace RegionNG
 
             Console.WriteLine($"idx:{item._idx} ThreadId:{Thread.CurrentThread.ManagedThreadId}");     
             
-            //await Task.Yield();
         }
 
         
